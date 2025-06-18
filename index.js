@@ -5,21 +5,62 @@ function main() {
   const blackWhiteButton = document.getElementById("blacked");
   const pixelateButton = document.getElementById("pixelate");
   const pixelationInput = document.getElementById("pixelateSlider");
+  const asciiButton = document.getElementById("ascii");
+  const asciiCanvas = document.getElementById("ascii-container");
+  const asciiContext = asciiCanvas.getContext("2d");
   let pixelationValue = 1;
 
-  let currentPixelateClickHandler = null;
+  let defaultImageBitmap = null;
 
-  function createPixelateButtonHandler(pixelSize) {
+  let currentPixelateClickHandler = null;
+  function createAsciiArt(pixelSize = 10) {
     return () => {
-      if (!imageInput.files[0]) {
-        console.error("No image selected to pixelate.");
+      console.log("creating ascii");
+      if (!defaultImageBitmap) {
+        console.error("No image loaded to convert into ascii.");
         return;
       }
 
+      asciiContext.clearRect(0, 0, canvas.width, canvas.height);
+
       const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
       const data = imageData.data;
+      asciiContext.font = `${9}px monospace`;
+      asciiContext.textBaseline = "top";
 
-      console.log("Pixelating with size:", pixelSize);
+      for (let y = 0; y < canvas.height; y += pixelSize) {
+        for (let x = 0; x < canvas.width; x += pixelSize) {
+          const pixelIndex = y * canvas.width + x;
+          const dataIndex = pixelIndex * 4;
+
+          const r = data[dataIndex];
+          const g = data[dataIndex + 1];
+          const b = data[dataIndex + 2];
+          const a = data[dataIndex + 3];
+
+          const char = ".";
+
+          asciiContext.fillStyle = `rgba(${r}, ${g}, ${b}, ${a})`;
+          asciiContext.fillText(char, x, y);
+        }
+      }
+    };
+  }
+
+  asciiButton.addEventListener("click", createAsciiArt());
+
+  function createPixelateButtonHandler(pixelSize) {
+    return () => {
+      if (!defaultImageBitmap) {
+        console.error("No image loaded to pixelate.");
+        return;
+      }
+
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(defaultImageBitmap, 0, 0);
+
+      const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
 
       for (let y = 0; y < canvas.height; y += pixelSize) {
         for (let x = 0; x < canvas.width; x += pixelSize) {
@@ -45,7 +86,6 @@ function main() {
             }
           }
 
-          // Apply the calculated average color to all pixels within this block
           if (count > 0) {
             r = Math.floor(r / count);
             g = Math.floor(g / count);
@@ -69,9 +109,7 @@ function main() {
         }
       }
 
-      // Put the modified image data back onto the canvas
       context.putImageData(imageData, 0, 0);
-      console.log("Image pixelated and redrawn.");
     };
   }
 
@@ -87,20 +125,15 @@ function main() {
 
     currentPixelateClickHandler = createPixelateButtonHandler(pixelationValue);
 
-    console.log(
-      "Pixelation value updated to:",
-      pixelationValue,
-      "New pixelate button listener attached."
-    );
     pixelateButton.addEventListener("click", currentPixelateClickHandler);
   });
 
   imageInput.addEventListener("change", function (e) {
     const file = e.target.files[0];
     if (!file) {
-      console.error("No file selected.");
       return;
     }
+
     const reader = new FileReader();
 
     reader.onload = function (event) {
@@ -108,8 +141,13 @@ function main() {
       img.onload = function () {
         canvas.width = img.width;
         canvas.height = img.height;
+        asciiCanvas.width = img.width;
+        asciiCanvas.height = img.height;
         context.drawImage(img, 0, 0);
-        console.log("Image loaded and drawn to canvas.");
+
+        createImageBitmap(img).then((bitmap) => {
+          defaultImageBitmap = bitmap;
+        });
       };
       img.src = event.target.result;
     };
@@ -117,10 +155,13 @@ function main() {
   });
 
   blackWhiteButton.addEventListener("click", () => {
-    if (!imageInput.files[0]) {
-      console.error("No image selected to apply Black & White.");
+    if (!defaultImageBitmap) {
+      console.error("No image loaded to apply Black & White.");
       return;
     }
+
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(defaultImageBitmap, 0, 0);
 
     const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
     const data = imageData.data;
@@ -132,8 +173,6 @@ function main() {
       data[i + 2] = average;
     }
     context.putImageData(imageData, 0, 0);
-
-    console.log("Image data modified and redrawn (Black & White).");
   });
 }
 
