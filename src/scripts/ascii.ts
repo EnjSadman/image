@@ -2,7 +2,8 @@ export class AsciiConverter {
   private asciiCanvas: HTMLCanvasElement;
   private asciiContext: CanvasRenderingContext2D;
   private sourceImageBitmap: ImageBitmap | null = null;
-  private pixelSize: number = 4;
+  private pixelSize: number = 1;
+  private maximumBrightnessDifference = 10;
 
   constructor(
     asciiCanvas: HTMLCanvasElement,
@@ -47,5 +48,11 @@ export class AsciiConverter {
     }
   }
 
-  createAsciiArt(): void {}
+  checkPattern(pixelsArray: number[]) {
+
+  }
+
+  createAsciiArt(): void {
+    const asciiImageData = this.asciiContext.createImageData()
+  }
 }
