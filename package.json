@@ -1,5 +1,9 @@
 {
-	"devDependencies": {
-		"typescript": "^5.8.3"
-	}
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "npm run clean && tsc && cp -r ./src/*.html ./src/*.css dist/"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
 }
